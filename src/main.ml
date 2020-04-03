@@ -7,12 +7,14 @@ struct
     type state
 
     type cmd
+    
+    let arb_cmd state
 
     let init_state
     let next_state cmd state
 
     let init_sut () 
-    let cleanup ()  
+    let cleanup _  
 
     let run_cmd cmd state actual
 
