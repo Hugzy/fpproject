@@ -7,7 +7,7 @@ build:
 	cohttp,\
 	lwt \
 	-tag thread \
-	playground/clienttut.native
+	playground/clientexample.native
 
 clean:
 	ocamlbuild -clean
