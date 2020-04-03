@@ -10,7 +10,16 @@ build:
 	playground/clientexample.native
 
 main:
-	ocamlbuild -use-ocamlfind -package qcheck src/main.byte
+	ocamlbuild -r \
+	-use-ocamlfind \
+	-package \
+	qcheck,\
+	cohttp-lwt-unix,\
+	cohttp,\
+	lwt,\
+	yojson \
+	-tag thread \
+	src/main.native
 
 clean:
 	ocamlbuild -clean
