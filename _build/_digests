@@ -1,0 +1,5 @@
+"Rule: ocaml: ml & cmi -> cmx & o (%=playground/clienttut )": "\188\014\209du\025\149j\206.s/\209\212,\022"
+"Rule: ocaml: ml -> cmo & cmi (%=playground/clienttut )": "\0245\t\223V@`C\173EoH\141A\152C"
+"Resource: /home/magida/FPProject/playground/clienttut.ml": "E\134t\157\199Wg\197\153Q\162A\246\026\239\020"
+"Rule: ocaml dependencies ml (%=playground/clienttut )": "\197\251_k\197M \187\152\219#1\2348/x"
+"Rule: ocaml: cmx* & o* -> native (%=playground/clienttut )": "\r,\228\2069\145e\210\218qw]\193[fH"

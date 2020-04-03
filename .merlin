@@ -1,2 +1,2 @@
 # package path
-PKG ctypes ctypes.foreign qcheck qcstm ppx_deriving.show
+PKG ctypes ctypes.foreign qcheck qcstm ppx_deriving.show cohttp-lwt-unix lwt cohttp mutex

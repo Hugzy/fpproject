@@ -1,0 +1,10 @@
+### Starting build.
+# Target: playground/clienttut.ml.depends, tags: { package(qcheck,cohttp-lwt-unix,cohttp,lwt), extension:ml, file:playground/clienttut.ml, ocaml, ocamldep, quiet, thread, traverse }
+ocamlfind ocamldep -package qcheck,cohttp-lwt-unix,cohttp,lwt -modules playground/clienttut.ml > playground/clienttut.ml.depends # cached
+# Target: playground/clienttut.cmo, tags: { package(qcheck,cohttp-lwt-unix,cohttp,lwt), byte, compile, extension:cmo, extension:ml, file:playground/clienttut.cmo, file:playground/clienttut.ml, implem, ocaml, quiet, thread, traverse }
+ocamlfind ocamlc -c -thread -package qcheck,cohttp-lwt-unix,cohttp,lwt -I playground -o playground/clienttut.cmo playground/clienttut.ml # cached
+# Target: playground/clienttut.cmx, tags: { package(qcheck,cohttp-lwt-unix,cohttp,lwt), compile, extension:cmx, extension:ml, file:playground/clienttut.cmx, file:playground/clienttut.ml, implem, native, ocaml, quiet, thread, traverse }
+ocamlfind ocamlopt -c -thread -package qcheck,cohttp-lwt-unix,cohttp,lwt -I playground -o playground/clienttut.cmx playground/clienttut.ml # cached
+# Target: playground/clienttut.native, tags: { package(qcheck,cohttp-lwt-unix,cohttp,lwt), dont_link_with, extension:native, file:playground/clienttut.native, link, native, ocaml, program, quiet, thread, traverse }
+ocamlfind ocamlopt -linkpkg -thread -package qcheck,cohttp-lwt-unix,cohttp,lwt -I playground playground/clienttut.cmx -o playground/clienttut.native # cached
+# Compilation successful.

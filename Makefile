@@ -1,6 +1,15 @@
 build:
-	ocamlbuild -use-ocamlfind -package qcheck <Insert build target here>
+	ocamlbuild -r \
+	-use-ocamlfind \
+	-package \
+	qcheck,\
+	cohttp-lwt-unix,\
+	cohttp,\
+	lwt \
+	-tag thread \
+	playground/clienttut.native
 
 clean:
 	ocamlbuild -clean
 
+	
