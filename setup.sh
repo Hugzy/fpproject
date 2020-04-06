@@ -1,3 +1,5 @@
+sudo apt-get install libcurl4-gnutls-dev
+
 opam install QCheck -y -q
 opam install QCSTM -y -q
 opam install ppx_deriving -y -q

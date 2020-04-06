@@ -17,7 +17,10 @@ main:
 	cohttp-lwt-unix,\
 	cohttp,\
 	lwt,\
-	yojson \
+	yojson,\
+	ppx_deriving.show,\
+	qcstm,\
+	curl \
 	-tag thread \
 	src/main.native
 
