@@ -1,6 +1,7 @@
 open QCheck
 open Yojson.Basic.Util
 open Curl
+open Format
 
 module MyState = Map.Make(String)
 
@@ -63,7 +64,7 @@ struct
   let get = "/api/shop/get/"
   let create = "/api/shop/create/item"
   let init_state = []
-  let init_sut() = ref 0
+  let init_sut() = ref []
   let cleanup _  = ignore(Http.rawpost (url ^ "/api/shop/reset") "")
 
   (* Functions *)
@@ -91,17 +92,12 @@ struct
       (Gen.return Create)
     else
       QCheck.make ~print:show_cmd
-        (Gen.oneof [(* Gen.return Create; *)
+        (Gen.oneof [ Gen.return Create;
                     Gen.map (fun i -> Get i) int_gen])
 
   let next_state cmd state = match cmd with
     | Get ix -> state
     | Create -> state 
-  
-  (* 
-  let addItemToState sutItem state = 
-    state := state@[sutItem]
-  *)
 
   let run_cmd cmd state sut = match cmd with
     | Get ix -> let id = lookupItem ix state in
@@ -109,7 +105,13 @@ struct
                 String.compare (Yojson.Basic.to_string content) (lookupItem ix state) == 0
     | Create -> let code,content = Http.post (url^create) "{\"foo\": \"bar\"}" in
                 (* Get contents id and add it to sut *)
-                let id = List.hd(extract_id content);
+                printf "List size: %d " (List.length (extract_id content));
+                let extracted = extract_id content in
+                if (List.length extracted > 0) then
+                  let id = List.hd extracted in
+                    sut := !sut@[id];
+                    true
+                else
                 true
 
   let precond cmd state = match cmd with
