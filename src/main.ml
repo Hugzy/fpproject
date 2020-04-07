@@ -79,6 +79,7 @@ struct
   let extract_id json =
     [json]
     |> filter_member "id"
+    |> flatten
     |> filter_string
 
   let lookupId ix state = let mItem = lookupItem ix state in
@@ -105,13 +106,17 @@ struct
                 String.compare (Yojson.Basic.to_string content) (lookupItem ix state) == 0
     | Create -> let code,content = Http.post (url^create) "{\"foo\": \"bar\"}" in
                 (* Get contents id and add it to sut *)
-                printf "List size: %d " (List.length (extract_id content));
-                let extracted = extract_id content in
+                (*printf "List size: %d " (List.length (extract_id content));*)
+                let idt = content |> member "id" |> to_int in
+                  printf "ID is: %d " (idt);
+                  (*sut := !sut@[idt];*)
+                (*let extracted = extract_id content in
                 if (List.length extracted > 0) then
                   let id = List.hd extracted in
+                    printf "ID is: %d " (id);
                     sut := !sut@[id];
                     true
-                else
+                else*)
                 true
 
   let precond cmd state = match cmd with
