@@ -65,7 +65,7 @@ struct
   let create = "/api/shop/create/item"
   let init_state = []
   let init_sut() = ref []
-  let cleanup _  = ignore(Http.rawpost (url ^ "/api/shop/reset") "")
+  let cleanup _  =  ignore(Http.rawpost (url ^ "/api/shop/reset") "")
 
   (* Functions *)
   (* Recursively drops n heads of a list and returns the rest of the list *)
@@ -75,6 +75,8 @@ struct
 
   (* basically this https://en.wikipedia.org/wiki/De_Bruijn_index *)
   let lookupItem ix state = List.hd (drop (ix mod List.length state) (List.rev state))
+
+  let lookupSutItem ix sut = List.hd (drop (ix mod List.length sut) (List.rev sut))
   
   let extract_id json =
     [json]
@@ -98,29 +100,29 @@ struct
 
   let next_state cmd state = match cmd with
     | Get ix -> state
-    | Create -> state 
+    | Create -> state@["{\"name\": \"bar\"}"]
 
   let run_cmd cmd state sut = match cmd with
-    | Get ix -> let id = lookupItem ix state in
+    | Get ix -> let id = lookupSutItem ix !sut in
+                (*printf "lookup ID is: %s " (id);*)
                 let code,content = Http.get (url ^ get ^ id) in
-                String.compare (Yojson.Basic.to_string content) (lookupItem ix state) == 0
-    | Create -> let code,content = Http.post (url^create) "{\"foo\": \"bar\"}" in
+                printf "Content is: %s " (Yojson.Basic.to_string content);
+               (* printf "State is: %s " (lookupItem ix state); *)
+                let extractedState = lookupItem ix state in
+                  let stateJson = Yojson.Basic.from_string extractedState in
+                  let sutJson = Yojson.Basic.from_string ("{\"id\": " ^ id ^ "}") in
+                  let combinedJson = Yojson.Basic.Util.combine stateJson sutJson in
+                  printf "Combined State is: %s " (Yojson.Basic.to_string combinedJson);
+                String.compare (Yojson.Basic.to_string content) (Yojson.Basic.to_string combinedJson) == 0
+                
+    | Create -> let code,content = Http.post (url^create) "{\"name\": \"bar\"}" in
                 (* Get contents id and add it to sut *)
-                (*printf "List size: %d " (List.length (extract_id content));*)
-                let idt = content |> member "id" |> to_int in
-                  printf "ID is: %d " (idt);
-                  (*sut := !sut@[idt];*)
-                (*let extracted = extract_id content in
-                if (List.length extracted > 0) then
-                  let id = List.hd extracted in
-                    printf "ID is: %d " (id);
-                    sut := !sut@[id];
-                    true
-                else*)
+                let id = content |> member "id" |> to_int in 
+                  sut := !sut@[string_of_int id];
                 true
 
   let precond cmd state = match cmd with
-    | Get ix -> List.length state > 0
+    | Get ix -> List.length state > 0 (*&& (List.length state = List.length sut)*)
     | Create -> true
 
 end
@@ -129,4 +131,4 @@ module APItest = QCSTM.Make(APIConf)
 ;; 
 
 QCheck_runner.run_tests ~verbose:true
-  [APItest.agree_test ~count:1000 ~name:"Api Model agreement"]
+  [APItest.agree_test ~count:500 ~name:"Api Model agreement"]
