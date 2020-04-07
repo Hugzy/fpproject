@@ -78,6 +78,8 @@ struct
 
   let lookupSutItem ix sut = List.hd (drop (ix mod List.length sut) (List.rev sut))
   
+  let checkInvariant state sut = List.length state = List.length !sut
+
   let extract_id json =
     [json]
     |> filter_member "id"
@@ -103,17 +105,20 @@ struct
     | Create -> state@["{\"name\": \"bar\"}"]
 
   let run_cmd cmd state sut = match cmd with
-    | Get ix -> let id = lookupSutItem ix !sut in
-                (*printf "lookup ID is: %s " (id);*)
-                let code,content = Http.get (url ^ get ^ id) in
-                printf "Content is: %s " (Yojson.Basic.to_string content);
-               (* printf "State is: %s " (lookupItem ix state); *)
-                let extractedState = lookupItem ix state in
-                  let stateJson = Yojson.Basic.from_string extractedState in
-                  let sutJson = Yojson.Basic.from_string ("{\"id\": " ^ id ^ "}") in
-                  let combinedJson = Yojson.Basic.Util.combine stateJson sutJson in
-                  printf "Combined State is: %s " (Yojson.Basic.to_string combinedJson);
-                String.compare (Yojson.Basic.to_string content) (Yojson.Basic.to_string combinedJson) == 0
+    | Get ix -> if (checkInvariant state sut) then 
+                   let id = lookupSutItem ix !sut in
+                  (*printf "lookup ID is: %s " (id);*)
+                  let code,content = Http.get (url ^ get ^ id) in
+                  (*printf "Content is: %s " (Yojson.Basic.to_string content);*)
+                  (* printf "State is: %s " (lookupItem ix state); *)
+                  let extractedState = lookupItem ix state in
+                    let stateJson = Yojson.Basic.from_string extractedState in
+                    let sutJson = Yojson.Basic.from_string ("{\"id\": " ^ id ^ "}") in
+                    let combinedJson = Yojson.Basic.Util.combine stateJson sutJson in
+                    (*printf "Combined State is: %s " (Yojson.Basic.to_string combinedJson);*)
+                  String.compare (Yojson.Basic.to_string content) (Yojson.Basic.to_string combinedJson) == 0
+                else
+                  false
                 
     | Create -> let code,content = Http.post (url^create) "{\"name\": \"bar\"}" in
                 (* Get contents id and add it to sut *)
@@ -122,8 +127,10 @@ struct
                 true
 
   let precond cmd state = match cmd with
-    | Get ix -> List.length state > 0 (*&& (List.length state = List.length sut)*)
+    | Get ix -> List.length state > 0 
     | Create -> true
+
+  
 
 end
 
