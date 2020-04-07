@@ -1,3 +1,5 @@
+.PHONY: clean main
+
 build:
 	ocamlbuild -r \
 	-use-ocamlfind \
@@ -24,7 +26,9 @@ main:
 	-tag thread \
 	src/main.native
 
+run: 
+	./main.native
+
 clean:
 	ocamlbuild -clean
 
-	

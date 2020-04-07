@@ -3,8 +3,6 @@ open Yojson.Basic.Util
 open Curl
 open Format
 
-module MyState = Map.Make(String)
-
 module InternalHttp =
 struct
   let get ?(header = "") url =
@@ -31,13 +29,54 @@ struct
     let code = get_responsecode c in
     cleanup c;
     (code, Buffer.contents r)
+  
+  let put ?(header = "") url data =
+    let r = Buffer.create 16384 in
+    let c = Curl.init () in
+    set_url c url;
+    set_put c true;
+    set_httpheader c [header];
+    set_writefunction c (fun s -> Buffer.add_string r s; String.length s);
+    set_postfields c data;
+    set_postfieldsize c (String.length data);
+    perform c;
+    let code = get_responsecode c in
+    cleanup c;
+    (code, Buffer.contents r)
+
+  let patch ?(header = "") url data =
+    let r = Buffer.create 16384 in
+    let c = Curl.init () in
+    set_customrequest c "PATCH";
+    set_url c url;
+    set_httpheader c [header];
+    set_writefunction c (fun s -> Buffer.add_string r s; String.length s);
+    perform c;
+    let code = get_responsecode c in
+    cleanup c;
+    (code, Buffer.contents r)
+
+  let delete ?(header = "") url =
+    let r = Buffer.create 16384 in
+    let c = Curl.init () in
+    set_customrequest c "DELETE";
+    set_url c url;
+    set_httpheader c [header];
+    set_writefunction c (fun s -> Buffer.add_string r s; String.length s);
+    perform c;
+    let code = get_responsecode c in
+    cleanup c;
+    (code, Buffer.contents r)
 end
 
 module Http =
 struct
   (* Http Headers *)
-  let get_header = "Content-Type:application/json"
+  let get_header = "Content-Type:application/json; "
   let post_header = "Content-Type:application/json"
+  let put_header = "Content-Type:application/json"
+  let patch_header = "Content-Type:application/json"
+  let delete_header = "Content-Type:application/json"
   
   let get ?(header = get_header) url =
     let c,r = InternalHttp.get ~header:header url in
@@ -48,6 +87,16 @@ struct
   let post ?(header = post_header) url data =
     let c,r = InternalHttp.post ~header:header url data in
     (c, Yojson.Basic.from_string r)
+  let put ?(header = put_header) url data =
+    let c,r = InternalHttp.put ~header:header url data in
+    (c, Yojson.Basic.from_string r)
+  let patch ?(header = patch_header) url data =
+    let c,r = InternalHttp.patch ~header:header url data in
+    (c, Yojson.Basic.from_string r)
+  let delete ?(header = delete_header) url =
+    let c,r = InternalHttp.delete ~header:header url in
+    (c, r)
+
 end
 
 module APIConf =
@@ -57,12 +106,14 @@ struct
   type state = string list
   type cmd =
     | Get of int
-    | Create [@@deriving show { with_path = false }]
+    | Create 
+    | Delete of int [@@deriving show { with_path = false }]
 
   (* Constants *)
   let url = "http://167.172.184.103"
   let get = "/api/shop/get/"
   let create = "/api/shop/create/item"
+  let delete_url = url ^ "/api/shop/delete/"
   let init_state = []
   let init_sut() = ref []
   let cleanup _  =  ignore(Http.rawpost (url ^ "/api/shop/reset") "")
@@ -77,7 +128,7 @@ struct
   let lookupItem ix state = List.hd (drop (ix mod List.length state) (List.rev state))
 
   let lookupSutItem ix sut = List.hd (drop (ix mod List.length sut) (List.rev sut))
-  
+
   let checkInvariant state sut = List.length state = List.length !sut
 
   let extract_id json =
@@ -98,11 +149,19 @@ struct
     else
       QCheck.make ~print:show_cmd
         (Gen.oneof [ Gen.return Create;
+                    Gen.map (fun i -> Delete i) int_gen;
                     Gen.map (fun i -> Get i) int_gen])
+
+  let remove_item pos list = [] (* TODO *)
+
+  let getPos ix list = List.length list - (ix mod List.length list)
 
   let next_state cmd state = match cmd with
     | Get ix -> state
     | Create -> state@["{\"name\": \"bar\"}"]
+    | Delete ix -> let pos = getPos ix state in
+                   (* Returns a list of all items except that which is 'item' found above *)
+                   remove_item pos state
 
   let run_cmd cmd state sut = match cmd with
     | Get ix -> if (checkInvariant state sut) then 
@@ -119,16 +178,32 @@ struct
                   String.compare (Yojson.Basic.to_string content) (Yojson.Basic.to_string combinedJson) == 0
                 else
                   false
-                
     | Create -> let code,content = Http.post (url^create) "{\"name\": \"bar\"}" in
                 (* Get contents id and add it to sut *)
                 let id = content |> member "id" |> to_int in 
                   sut := !sut@[string_of_int id];
                 true
+    | Delete ix -> if (checkInvariant state sut) then (
+                     let id = lookupSutItem ix !sut in
+                     let pos = getPos ix !sut in
+                     let code,content = Http.delete (delete_url ^ id) in
+                     if code == 200 then (
+                       sut := remove_item pos !sut;
+                       true;
+                     )
+                      else 
+                        false
+                    )
+                    else
+                      false
+
+
 
   let precond cmd state = match cmd with
     | Get ix -> List.length state > 0 
+    | Delete ix-> List.length state > 0
     | Create -> true
+
 
   
 
