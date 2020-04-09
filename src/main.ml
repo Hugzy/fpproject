@@ -152,29 +152,30 @@ struct
                     Gen.map (fun i -> Delete i) int_gen;
                     Gen.map (fun i -> Get i) int_gen])
 
-  let remove_item pos list = [] (* TODO *)
+  let rec remove_item pos list = match (list, pos) with
+    | ([], _) -> []
+    | (head::tail, 0) -> tail
+    | (head::tail,_) -> [head]@(remove_item (pos-1) tail)
 
-  let getPos ix list = List.length list - (ix mod List.length list)
+  (* Wanting to get the index of the id back, length of list will always start at 1 for a given element but the first element is at index 0*)
+  let getPos ix list = ((List.length list - 1) - (ix mod List.length list))
 
   let next_state cmd state = match cmd with
     | Get ix -> state
     | Create -> state@["{\"name\": \"bar\"}"]
     | Delete ix -> let pos = getPos ix state in
                    (* Returns a list of all items except that which is 'item' found above *)
-                   remove_item pos state
+                   let l = remove_item pos state in
+                   l
 
   let run_cmd cmd state sut = match cmd with
     | Get ix -> if (checkInvariant state sut) then 
                    let id = lookupSutItem ix !sut in
-                  (*printf "lookup ID is: %s " (id);*)
                   let code,content = Http.get (url ^ get ^ id) in
-                  (*printf "Content is: %s " (Yojson.Basic.to_string content);*)
-                  (* printf "State is: %s " (lookupItem ix state); *)
                   let extractedState = lookupItem ix state in
                     let stateJson = Yojson.Basic.from_string extractedState in
                     let sutJson = Yojson.Basic.from_string ("{\"id\": " ^ id ^ "}") in
                     let combinedJson = Yojson.Basic.Util.combine stateJson sutJson in
-                    (*printf "Combined State is: %s " (Yojson.Basic.to_string combinedJson);*)
                   String.compare (Yojson.Basic.to_string content) (Yojson.Basic.to_string combinedJson) == 0
                 else
                   false
@@ -197,16 +198,10 @@ struct
                     else
                       false
 
-
-
   let precond cmd state = match cmd with
     | Get ix -> List.length state > 0 
     | Delete ix-> List.length state > 0
     | Create -> true
-
-
-  
-
 end
 
 module APItest = QCSTM.Make(APIConf)
