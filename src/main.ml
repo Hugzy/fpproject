@@ -204,17 +204,16 @@ struct
       true
     | Delete ix -> if (checkInvariant state sut) then (
         let id = lookupSutItem ix !sut in
-        let pos = getPos ix !sut in
         let code,content = Http.delete (delete_url ^ id) in
-        if code == 200 then (
+        if code == 200 then
+          let pos = getPos ix !sut in
           sut := remove_item pos !sut;
           true;
-        )
         else 
           false
       )
       else
-        false
+        false;
     | Put ix -> if (checkInvariant state sut) then (
         let id = lookupSutItem ix !sut in
         let newelem = "{\"name\": \"foo\"}" in
@@ -222,7 +221,7 @@ struct
         if code == 200 then (
           true;
         ) else
-          false
+          false;
       ) else
         false
 
