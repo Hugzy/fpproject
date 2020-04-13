@@ -24,7 +24,7 @@ main:
 	qcstm,\
 	curl \
 	-tag thread \
-	src/main.native
+	src/testmain.native
 
 run: 
 	./main.native
