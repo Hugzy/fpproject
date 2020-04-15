@@ -29,6 +29,14 @@ main:
 run: 
 	./main.native
 
+ab:
+	ocamlbuild -r \
+	-use-ocamlfind \
+	playground/amodule 
+	playground/bmodule
+
 clean:
+	ocamlbuild -clean
+	cd playground
 	ocamlbuild -clean
 
