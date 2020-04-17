@@ -24,16 +24,12 @@ main:
 	qcstm,\
 	curl \
 	-tag thread \
-	src/testmain.native
+	src/main.native \
+	src/http.native \
+	src/externals.native
 
 run: 
 	./main.native
-
-ab:
-	ocamlbuild -r \
-	-use-ocamlfind \
-	playground/amodule 
-	playground/bmodule
 
 clean:
 	ocamlbuild -clean

@@ -2,6 +2,7 @@ open QCheck
 open Yojson.Basic.Util
 open Curl
 open Format
+open Externals
 
 module InternalHttp =
 struct

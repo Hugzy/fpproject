@@ -1,3 +1,5 @@
+open Yojson.Basic.Util
+
 (* Implement this method to combine your state and id *)
 let combine_state_id stateItem id =
 	let sutJson = Yojson.Basic.from_string ("{\"id\": " ^ id ^ "}") in
