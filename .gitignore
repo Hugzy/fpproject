@@ -1,6 +1,7 @@
 *.native
 *.byte
 /_build
+/**/_build
 *.cmx
 *.o
 *.cmi
