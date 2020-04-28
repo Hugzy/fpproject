@@ -1,22 +1,5 @@
-all: clean apiTest ubiComp
+all: clean ubiComp
 .PHONY: all
-
-apiTest:
-	ocamlbuild -r \
-	-use-ocamlfind \
-	-package \
-	qcheck,\
-	cohttp-lwt-unix,\
-	cohttp,\
-	lwt,\
-	yojson,\
-	ppx_deriving.show,\
-	qcstm,\
-	curl \
-	-tag thread \
-	apiTest.native \
-	http.native \
-	apiTestexternals.native
 
 ubiComp:
 	ocamlbuild -r \
@@ -36,7 +19,6 @@ ubiComp:
 	ubiCompexternals.native
 
 run:
-	./apiTest.native
 	./ubiComp.native
 
 clean:
