@@ -1,7 +1,7 @@
-all: clean ubiComp
+all: clean ubicomp
 .PHONY: all
 
-ubiComp:
+ubicomp:
 	ocamlbuild -r \
 	-use-ocamlfind \
 	-package \
@@ -14,12 +14,12 @@ ubiComp:
 	qcstm,\
 	curl \
 	-tag thread \
-	ubiComp.native \
+	ubicomp.native \
 	http.native \
-	ubiCompexternals.native
+	ubicompexternals.native
 
 run:
-	./ubiComp.native
+	./ubicomp.native
 
 clean:
 	ocamlbuild -clean

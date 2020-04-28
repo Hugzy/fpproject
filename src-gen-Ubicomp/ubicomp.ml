@@ -3,7 +3,7 @@ open Yojson.Basic.Util
 open Curl
 open Format
 open Http
-open UbiCompexternals
+open Ubicompexternals
 
 	
 module APIConf =
@@ -13,16 +13,16 @@ struct
   type state = string list
 
   type cmd =
-  	 | SpecificStatus of int
-  	 | ChangeStatusIn of int
+  	 | Getstatus of int
   	 | ChangeStatusOut of int
+  	 | ChangeStatusIn of int
   	 | CreateUser
   	 [@@deriving show { with_path = false }]
   
-  let specificStatusURL="http://167.172.184.103/api/status"
-  let changeStatusInURL="http://167.172.184.103/api/in"
+  let getstatusURL="http://167.172.184.103/api/status"
   let changeStatusOutURL="http://167.172.184.103/api/out"
-  let createUserURL="http://167.172.184.103/api/users/createONE"
+  let changeStatusInURL="http://167.172.184.103/api/in"
+  let createUserURL="http://167.172.184.103/api/users/create"
  
   let init_state = []
   let init_sut() = ref []
@@ -49,6 +49,8 @@ struct
   (* Wanting to get the index of the id back, length of list will always start at 1 for a given element but the first element is at index 0*)
   let getPos ix list = ((List.length list - 1) - (ix mod List.length list))
   
+  let replaceElem pos list newelem = List.mapi (fun i x -> if i = pos then newelem else x) list
+  
   let inSpace value state = List.mem (value) state
   
   let isEmpty state = (List.length state = 0)
@@ -64,57 +66,54 @@ struct
     else
       QCheck.make ~print:show_cmd
         (Gen.oneof [
-  	      		  Gen.map (fun i -> SpecificStatus i) int_gen;
-  	      		  Gen.map (fun i -> ChangeStatusIn i) int_gen;
+  	      		  Gen.map (fun i -> Getstatus i) int_gen;
   	      		  Gen.map (fun i -> ChangeStatusOut i) int_gen;
+  	      		  Gen.map (fun i -> ChangeStatusIn i) int_gen;
   	      		  (Gen.return CreateUser)
                    ])
  
   let next_state cmd state = match cmd with
-  	| SpecificStatus ix -> state
-  	| ChangeStatusIn ix -> let newelem = "{\"name\": \"foo\"}" in
+  	| Getstatus ix -> state
+  	| ChangeStatusOut ix -> let newelem = "{\"name\":\"John\",\"status\":\"out\"}" in
   	      let pos = getPos ix state in
   	      replaceElem pos state newelem
-  	| ChangeStatusOut ix -> let newelem = "{\"name\": \"foo\"}" in
+  	| ChangeStatusIn ix -> let newelem = "{\"name\":\"John\",\"status\":\"in\"}" in
   	      let pos = getPos ix state in
   	      replaceElem pos state newelem
   	| CreateUser  -> state@["{\"name\":\"John\"}"]
  
   let run_cmd cmd state sut = match cmd with
-  	| specificStatus ix -> if (checkInvariant state sut) then 
+  	| Getstatus ix -> if (checkInvariant state sut) then 
   	let id = lookupSutItem ix !sut in
-  		let code,content = Http.get (specificStatusURL^"/"^id)  in
-  	((let extractedState = lookupItem ix state in
+  		let code,content = Http.get (getstatusURL^"/"^id)  in
+  	(let extractedState = lookupItem ix state in
   		let id = lookupSutItem ix !sut in
   			let stateJson = Yojson.Basic.from_string extractedState in
   				let combined = combine_state_id stateJson id in
   					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
   	) && ( (code == 200))
-  	) || ( (code == 404))
   	 else false
-  	| changeStatusIn ix -> if (checkInvariant state sut) then 
-  	let id = lookupSutItem ix !sut in
-  		let code,content = Http.post (changeStatusInURL^"/"^id)  in
-  	((let extractedState = lookupItem ix state in
-  		let id = lookupSutItem ix !sut in
-  			let stateJson = Yojson.Basic.from_string extractedState in
-  				let combined = combine_state_id stateJson id in
-  					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
-  	) && ( (code == 200))
-  	) || ( (code == 404))
-  	 else false
-  	| changeStatusOut ix -> if (checkInvariant state sut) then 
+  	| ChangeStatusOut ix -> if (checkInvariant state sut) then 
   	let id = lookupSutItem ix !sut in
   		let code,content = Http.post (changeStatusOutURL^"/"^id)  in
-  	((let extractedState = lookupItem ix state in
+  	(let extractedState = lookupItem ix state in
   		let id = lookupSutItem ix !sut in
   			let stateJson = Yojson.Basic.from_string extractedState in
   				let combined = combine_state_id stateJson id in
   					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
   	) && ( (code == 200))
-  	) || ( (code == 404))
   	 else false
-  	| createUser  -> if (checkInvariant state sut) then 
+  	| ChangeStatusIn ix -> if (checkInvariant state sut) then 
+  	let id = lookupSutItem ix !sut in
+  		let code,content = Http.post (changeStatusInURL^"/"^id)  in
+  	(let extractedState = lookupItem ix state in
+  		let id = lookupSutItem ix !sut in
+  			let stateJson = Yojson.Basic.from_string extractedState in
+  				let combined = combine_state_id stateJson id in
+  					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
+  	) && ( (code == 200))
+  	 else false
+  	| CreateUser  -> if (checkInvariant state sut) then 
   	let code,content = Http.post createUserURL "{\"name\":\"John\"}" in
   	let id = extractIdFromContent content in
   		sut := !sut@[id];
@@ -122,11 +121,11 @@ struct
   	 else false
  
   let precond cmd state = match cmd with
-      | SpecificStatus ix -> (List.length state > 0)  
-      	 && (isEmpty state = false)
-      | ChangeStatusIn ix -> (List.length state > 0)  
+      | Getstatus ix -> (List.length state > 0)  
       	 && (isEmpty state = false)
       | ChangeStatusOut ix -> (List.length state > 0)  
+      	 && (isEmpty state = false)
+      | ChangeStatusIn ix -> (List.length state > 0)  
       	 && (isEmpty state = false)
       | CreateUser -> true 
  
@@ -137,4 +136,4 @@ struct
  ;; 
  
  QCheck_runner.run_tests ~verbose:true
-   [APItest.agree_test ~count:500 ~name:"UbiComp"]
+   [APItest.agree_test ~count:500 ~name:"Ubicomp"]
