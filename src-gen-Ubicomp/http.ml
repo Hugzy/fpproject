@@ -84,19 +84,31 @@ let delete_header = "Content-Type:application/json"
 
 let get ?(header = get_header) url =
   let c,r = InternalHttp.get ~header:header url in
-  (c, Yojson.Basic.from_string r)
+  if String.length r == 0 then
+      (c, Yojson.Basic.from_string "{}")
+    else
+      (c, Yojson.Basic.from_string r)
 let rawpost ?(header = post_header) url data =
   let c,r = InternalHttp.post ~header:header url data in
   (c,r)
 let post ?(header = post_header) url data =
   let c,r = InternalHttp.post ~header:header url data in
-  (c, Yojson.Basic.from_string r)
+    if String.length r == 0 then
+      (c, Yojson.Basic.from_string "{}")
+    else
+      (c, Yojson.Basic.from_string r)
 let put ?(header = put_header) url data =
   let c,r = InternalHttp.put ~header:header url data in
-  (c, Yojson.Basic.from_string r)
+  if String.length r == 0 then
+      (c, Yojson.Basic.from_string "{}")
+    else
+      (c, Yojson.Basic.from_string r)
 let patch ?(header = patch_header) url data =
   let c,r = InternalHttp.patch ~header:header url data in
-  (c, Yojson.Basic.from_string r)
+  if String.length r == 0 then
+      (c, Yojson.Basic.from_string "{}")
+    else
+      (c, Yojson.Basic.from_string r)
 let delete ?(header = delete_header) url =
   let c,r = InternalHttp.delete ~header:header url in
   (c, r)

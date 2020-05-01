@@ -19,10 +19,10 @@ struct
   	 | CreateUser
   	 [@@deriving show { with_path = false }]
   
-  let getstatusURL="http://167.172.184.103/api/status"
-  let changeStatusOutURL="http://167.172.184.103/api/out"
-  let changeStatusInURL="http://167.172.184.103/api/in"
-  let createUserURL="http://167.172.184.103/api/users/create"
+  let getstatusURL="http://localhost:3000/api/status"
+  let changeStatusOutURL="http://localhost:3000/api/out"
+  let changeStatusInURL="http://localhost:3000/api/in"
+  let createUserURL="http://localhost:3000/api/users/create"
  
   let init_state = []
   let init_sut() = ref []
@@ -54,6 +54,14 @@ struct
   let inSpace value state = List.mem (value) state
   
   let isEmpty state = (List.length state = 0)
+
+
+  let filterContentGetStatus content = 
+  		let userID = content |> member "userid" |> to_string in
+			let status = content |> member "status"|> to_string in
+				let name = content |> member "name" |> to_string in
+					Yojson.Basic.from_string ("{\"userid\": \"" ^ userID ^ "\"," ^ "\"name\": \"" ^ name ^ "\"," ^ "\"status\": \"" ^ status ^ "\"}")
+
  
   let arb_cmd state = 
     let int_gen = Gen.oneof [Gen.small_int] in
@@ -74,10 +82,10 @@ struct
  
   let next_state cmd state = match cmd with
   	| Getstatus ix -> state
-  	| ChangeStatusOut ix -> let newelem = "{\"name\":\"John\",\"status\":\"out\"}" in
+  	| ChangeStatusOut ix -> let newelem = "{\"name\":\"John\",\"status\":\"OUT\"}" in
   	      let pos = getPos ix state in
   	      replaceElem pos state newelem
-  	| ChangeStatusIn ix -> let newelem = "{\"name\":\"John\",\"status\":\"in\"}" in
+  	| ChangeStatusIn ix -> let newelem = "{\"name\":\"John\",\"status\":\"IN\"}" in
   	      let pos = getPos ix state in
   	      replaceElem pos state newelem
   	| CreateUser  -> state@["{\"name\":\"John\"}"]
@@ -86,38 +94,33 @@ struct
   	| Getstatus ix -> if (checkInvariant state sut) then 
   	let id = lookupSutItem ix !sut in
   		let code,content = Http.get (getstatusURL^"/"^id)  in
+		  if code == 404 then
+		  	true
+		  else 
   	(let extractedState = lookupItem ix state in
   		let id = lookupSutItem ix !sut in
   			let stateJson = Yojson.Basic.from_string extractedState in
   				let combined = combine_state_id stateJson id in
-  					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
-  	) && ( (code == 200))
+				  	let filteredContent = filterContentGetStatus content	in
+  					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string filteredContent) == 0)
+  		 && ( (code == 200))
+		)
   	 else false
   	| ChangeStatusOut ix -> if (checkInvariant state sut) then 
   	let id = lookupSutItem ix !sut in
-  		let code,content = Http.post (changeStatusOutURL^"/"^id)  in
-  	(let extractedState = lookupItem ix state in
-  		let id = lookupSutItem ix !sut in
-  			let stateJson = Yojson.Basic.from_string extractedState in
-  				let combined = combine_state_id stateJson id in
-  					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
-  	) && ( (code == 200))
+  		let code,content = Http.post (changeStatusOutURL^"/"^id) ""  in
+  	 (code == 200)
   	 else false
   	| ChangeStatusIn ix -> if (checkInvariant state sut) then 
   	let id = lookupSutItem ix !sut in
-  		let code,content = Http.post (changeStatusInURL^"/"^id)  in
-  	(let extractedState = lookupItem ix state in
-  		let id = lookupSutItem ix !sut in
-  			let stateJson = Yojson.Basic.from_string extractedState in
-  				let combined = combine_state_id stateJson id in
-  					 (String.compare (Yojson.Basic.to_string combined) (Yojson.Basic.to_string content) == 0)
-  	) && ( (code == 200))
+  		let code,content = Http.post (changeStatusInURL^"/"^id) "" in
+  	 (code == 200)
   	 else false
   	| CreateUser  -> if (checkInvariant state sut) then 
   	let code,content = Http.post createUserURL "{\"name\":\"John\"}" in
   	let id = extractIdFromContent content in
   		sut := !sut@[id];
-  	 (code == 201)
+  	 (code == 200)
   	 else false
  
   let precond cmd state = match cmd with
