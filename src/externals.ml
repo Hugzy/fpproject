@@ -1,4 +1,5 @@
 open Yojson.Basic.Util
+open Http
 
 (* Implement this method to combine your state and id *)
 let combine_state_id stateItem id =
@@ -10,7 +11,7 @@ let combine_state_id stateItem id =
 let extractIdFromContent (content:Yojson.Basic.t) : string =
 	 string_of_int (content |> member "id" |> to_int)
 
-
 (* Implement this method to cleanup after each test *)
 let afterTestcleanup =
-	ignore(Http.rawpost ("http://167.172.184.103" ^ "/api/shop/reset") "")
+    let c,r = Http.rawpost ("http://167.172.184.103" ^ "/reset") "\"todos\": [],\"comments\": [],\"users\": []" in
+    ignore(c,r)
