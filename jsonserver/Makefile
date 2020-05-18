@@ -1,7 +1,7 @@
-all: clean jsonServer
+all: clean jsonServerTodo jsonServerComment jsonServerUser
 .PHONY: all
 
-jsonServer:
+jsonServerTodo:
 	ocamlbuild -r \
 	-use-ocamlfind \
 	-package \
@@ -14,12 +14,48 @@ jsonServer:
 	qcstm,\
 	curl \
 	-tag thread \
-	jsonServer.native \
+	jsonServerTodo.native \
 	http.native \
-	jsonServerexternals.native
+	jsonServerTodoexternals.native
+
+jsonServerComment:
+	ocamlbuild -r \
+	-use-ocamlfind \
+	-package \
+	qcheck,\
+	cohttp-lwt-unix,\
+	cohttp,\
+	lwt,\
+	yojson,\
+	ppx_deriving.show,\
+	qcstm,\
+	curl \
+	-tag thread \
+	jsonServerComment.native \
+	http.native \
+	jsonServerCommentexternals.native
+
+jsonServerUser:
+	ocamlbuild -r \
+	-use-ocamlfind \
+	-package \
+	qcheck,\
+	cohttp-lwt-unix,\
+	cohttp,\
+	lwt,\
+	yojson,\
+	ppx_deriving.show,\
+	qcstm,\
+	curl \
+	-tag thread \
+	jsonServerUser.native \
+	http.native \
+	jsonServerUserexternals.native
 
 run:
-	./jsonServer.native
+	./jsonServerTodo.native
+	./jsonServerComment.native
+	./jsonServerUser.native
 
 clean:
 	ocamlbuild -clean

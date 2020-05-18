@@ -13,5 +13,4 @@ let extractIdFromContent (content:Yojson.Basic.t) : string =
 
 (* Implement this method to cleanup after each test *)
 let afterTestcleanup =
-    let c,r = Http.rawpost ("http://167.172.184.103" ^ "/reset") "\"todos\": [],\"comments\": [],\"users\": []" in
-    ignore(c,r)
+    ignore(Http.rawpost ("http://localhost" ^ "/reset") "\"todos\": [],\"comments\": [],\"users\": []")
